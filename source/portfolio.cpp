@@ -9,58 +9,83 @@
 #include "convert.h"
 
 Portfolio::Portfolio()
-    : mCashOnHand(1000000), mShared(0), mTotalAssets(0), mAssetBalance(0) {}
+    : mCashOnHand(1000000),
+      mTotalAssets(1000000),
+      mAssetBalance(0),
+      mHoldings() {}
 
 void Portfolio::buy(Stock &stock, int num) {
     double price{stock.getPrice()};
     double buyPrice{num * price};
     if (mCashOnHand >= buyPrice) {
         mCashOnHand -= buyPrice;
-        mShared = mShared + num;
-        mTotalAssets = mCashOnHand + (mShared * price);
-        mAssetBalance = mShared * price;
+        const std::string &name = stock.getName();
+        mHoldings[name] += num;
         std::cout << std::fixed << std::setprecision(2);
         std::cout << "株を購入しました。現在の所持金: "
                   << formatWithCommas(mCashOnHand)
-                  << "円、保有株数: " << mShared << "株" << std::endl;
+                  << "円、保有株数: " << mHoldings[name] << "株" << std::endl;
     } else {
         std::cout << "所持金が不足しています。" << std::endl;
     }
 }
 
 void Portfolio::sell(Stock &stock, int num) {
-    if (mShared > 0) {
+    const std::string &name = stock.getName();
+    if (mHoldings[name] > 0 && num > 0) {
+        int canSell = std::min(num, mHoldings[name]);
+        if (canSell <= 0) {
+            std::cout << "保有株が足りません。" << std::endl;
+            return;
+        }
         double price{stock.getPrice()};
-        double sellPrice{num * price};
-        mCashOnHand += sellPrice;
-        mShared = mShared - num;
-        mTotalAssets = mCashOnHand + (mShared * price);
-        mAssetBalance = mShared * price;
+        mCashOnHand += price * canSell;
+        mHoldings[name] -= canSell;
         std::cout << "株を売却しました。現在の所持金: "
                   << formatWithCommas(mCashOnHand)
-                  << "円、保有株数: " << mShared << "株" << std::endl;
+                  << "円、保有株数: " << mHoldings[name] << "株" << std::endl;
     } else {
         std::cout << "保有株がありません。" << std::endl;
     }
 }
 
-void Portfolio::printStatus(Stock &stock) {
+void Portfolio::printStatus(const std::map<std::string, Stock> &stocks) {
+    double totalValue = mCashOnHand;
     std::cout << std::fixed << std::setprecision(0);
     std::cout << "現在の所持金: " << formatWithCommas(mCashOnHand) << "円"
               << std::endl;
-    std::cout << "保有株数: " << formatWithCommas(mShared) << "株" << std::endl;
-    std::cout << "資産残高: " << formatWithCommas(mAssetBalance) << "円"
-              << std::endl;
-    std::cout << "総資産: " << formatWithCommas(mTotalAssets) << "円"
+    std::cout << "----------------------------" << std::endl;
+
+    for (const auto &pair : stocks) {
+        const std::string &name{pair.first};
+        const Stock &stock = pair.second;
+        int num = mHoldings[name];
+        double price = stock.getPrice();
+        double value = num * price;
+        totalValue += value;
+
+        std::cout << "[" << name << "] "
+                  << "保有株: " << num << "株（1株：" << price << "円）"
+                  << " 評価額: " << formatWithCommas(value) << "円"
+                  << std::endl;
+    }
+
+    std::cout << "----------------------------" << std::endl;
+    std::cout << "総資産: " << formatWithCommas(totalValue) << "円"
               << std::endl;
 }
 
 double Portfolio::getCashOnHand() { return mCashOnHand; }
 
-int Portfolio::getShared() const { return mShared; }
-
-void Portfolio::updatePrice(Stock &stock, int num) {
-    double updatePrice{stock.updatePrice(num)};
-    mTotalAssets = mCashOnHand + (mShared * updatePrice);
-    mAssetBalance = mShared * updatePrice;
+void Portfolio::recomputeTotals(const std::map<std::string, Stock> &stocks) {
+    double sum = 0.0;
+    for (const auto &pair : stocks) {
+        const std::string &name = pair.first;
+        const Stock &stock = pair.second;
+        auto it = mHoldings.find(name);
+        if (it == mHoldings.end()) continue;
+        sum += static_cast<double>(it->second) * stock.getPrice();
+    }
+    mAssetBalance = sum;
+    mTotalAssets = mCashOnHand + mAssetBalance;
 }

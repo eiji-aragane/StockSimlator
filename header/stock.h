@@ -10,12 +10,20 @@
 class Stock {
    public:
     Stock()
-        : mPrice(10000), mGen(static_cast<unsigned int>(std::time(nullptr))) {};
+        : mName(""),
+          mPrice(0.0),
+          mGen(static_cast<unsigned int>(std::time(nullptr))) {}
+    Stock(std::string name, double price)
+        : mName(name),
+          mPrice(price),
+          mGen(static_cast<unsigned int>(std::time(nullptr))) {};
     ~Stock() = default;
     double updatePrice(int num);
     double getPrice() const;
+    const std::string& getName() const { return mName; }
 
    private:
+    std::string mName;
     double mPrice;
     std::mt19937 mGen;
 };

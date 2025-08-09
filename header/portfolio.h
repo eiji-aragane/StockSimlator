@@ -4,6 +4,9 @@
 #ifndef HEADER_PORTFOLIO_H_
 #define HEADER_PORTFOLIO_H_
 
+#include <map>
+#include <string>
+
 #include "stock.h"
 
 class Portfolio {
@@ -13,16 +16,16 @@ class Portfolio {
 
     void buy(Stock &stock, int num);
     void sell(Stock &stock, int num);
-    void printStatus(Stock &stock);
+    void printStatus(const std::map<std::string, Stock> &stocks);
     double getCashOnHand();
-    int getShared() const;
-    void updatePrice(Stock &stock, int num);
+    // std::vector<int> getHoldingsList() const;
+    void recomputeTotals(const std::map<std::string, Stock> &stocks);
 
    private:
     double mCashOnHand;
-    int mShared;
-    double mTotalAssets;
+    double mTotalAssets;  // 総資産
     double mAssetBalance;
+    std::map<std::string, int> mHoldings;
 };
 
 #endif  // HEADER_PORTFOLIO_H_

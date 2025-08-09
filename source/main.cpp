@@ -1,8 +1,8 @@
 // main.cpp
-#include "simlator.h"
+#include "simulator.h"
 
 int main() {
-    Simlator simlator;
-    simlator.run();
+    Simulator simulator;
+    simulator.run();
     return 0;
 }
